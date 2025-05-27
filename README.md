@@ -17,8 +17,6 @@ Real-time AI personal trainer with voice feedback and computer vision form analy
 ```bash
 cd coach-ai
 npm install
-cp .env.example .env
-# Add OPENAI_API_KEY=your_key_here to .env
 npm start
 # Open http://localhost:3000
 ```
