@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Coach - Your Personal Fitness Assistant</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body { 
+      display: flex; 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      color: #333;
+    }
+    
+    #video, #overlay { 
+      position: absolute; 
+      top: 0; 
+      left: 0; 
+      border-radius: 16px; 
+    }
+    
+    #video-container { 
+      position: relative; 
+      width: 640px; 
+      height: 480px; 
+      margin: 20px; 
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3); 
+      border-radius: 16px; 
+      overflow: hidden;
+      border: 3px solid rgba(255,255,255,0.2);
+    }
+    
+    #coach-panel { 
+      margin-left: 20px; 
+      width: 350px; 
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(10px);
+      padding: 24px; 
+      border-radius: 16px; 
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2); 
+      height: fit-content; 
+      margin-top: 20px;
+    }
+    
+    #coach-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    #coach-header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #667eea;
+      margin-bottom: 8px;
+    }
+    
+    #coach-header p {
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .status-indicator { 
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      gap: 10px; 
+      margin: 20px 0;
+      padding: 12px;
+      background: rgba(103, 126, 234, 0.1);
+      border-radius: 12px;
+      font-size: 14px; 
+      font-weight: 500;
+    }
+    
+    .status-dot { 
+      width: 12px; 
+      height: 12px; 
+      border-radius: 50%; 
+      background: #ddd; 
+      transition: all 0.3s ease;
+    }
+    
+    .status-dot.active { 
+      background: #4CAF50; 
+      animation: pulse 1.5s infinite; 
+      box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+    }
+    
+    @keyframes pulse { 
+      0% { opacity: 0.6; transform: scale(1); } 
+      50% { opacity: 1; transform: scale(1.1); } 
+      100% { opacity: 0.6; transform: scale(1); } 
+    }
+    
+    .listening { color: #4CAF50; }
+    .speaking { color: #ff9800; }
+    
+    #messages { 
+      list-style: none; 
+      padding: 0; 
+      max-height: 300px; 
+      overflow-y: auto; 
+      margin: 20px 0;
+      scrollbar-width: thin;
+      scrollbar-color: #667eea transparent;
+    }
+    
+    #messages::-webkit-scrollbar {
+      width: 4px;
+    }
+    
+    #messages::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    #messages::-webkit-scrollbar-thumb {
+      background: #667eea;
+      border-radius: 2px;
+    }
+    
+    .bubble { 
+      margin: 12px 0; 
+      padding: 12px 16px; 
+      border-radius: 18px; 
+      animation: fadeIn 0.4s ease-out;
+      max-width: 85%;
+      word-wrap: break-word;
+    }
+    
+    .ai-bubble { 
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white; 
+      margin-right: 20px;
+      box-shadow: 0 2px 8px rgba(103, 126, 234, 0.3);
+    }
+    
+    .user-bubble { 
+      background: #f0f0f0; 
+      color: #333;
+      margin-left: 20px;
+      text-align: right;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    @keyframes fadeIn { 
+      from { opacity: 0; transform: translateY(10px); } 
+      to { opacity: 1; transform: translateY(0); } 
+    }
+    
+    #controls { 
+      display: flex; 
+      flex-direction: column; 
+      gap: 12px; 
+      margin-top: 20px; 
+    }
+    
+    button { 
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white; 
+      border: none; 
+      padding: 14px 20px; 
+      border-radius: 12px; 
+      cursor: pointer; 
+      font-weight: 600;
+      font-size: 16px;
+      transition: all 0.3s ease; 
+      box-shadow: 0 4px 16px rgba(103, 126, 234, 0.3);
+    }
+    
+    button:hover { 
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(103, 126, 234, 0.4);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    .workout-active {
+      background: linear-gradient(135deg, #ff6b6b, #ee5a24) !important;
+      box-shadow: 0 4px 16px rgba(255, 107, 107, 0.3) !important;
+    }
+    
+    .workout-active:hover {
+      box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4) !important;
+    }
+    
+    .mic-button {
+      background: linear-gradient(135deg, #4CAF50, #45a049);
+      box-shadow: 0 4px 16px rgba(76, 175, 80, 0.3);
+    }
+    
+    .mic-button:hover {
+      box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+    }
+    
+    .mic-disabled {
+      background: linear-gradient(135deg, #999, #777) !important;
+      box-shadow: 0 4px 16px rgba(153, 153, 153, 0.3) !important;
+    }
+    
+    .pose-overlay {
+      pointer-events: none;
+    }
+    
+    .loading {
+      opacity: 0.7;
+    }
+    
+    @media (max-width: 1024px) {
+      body {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      #video-container {
+        width: 480px;
+        height: 360px;
+      }
+      
+      #coach-panel {
+        margin: 20px;
+        width: 480px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="video-container">
+    <video id="video" width="640" height="480" autoplay muted></video>
+    <canvas id="overlay" class="pose-overlay" width="640" height="480"></canvas>
+  </div>
+  
+  <div id="coach-panel">
+    <div id="coach-header">
+      <h1>🏋️ AI Coach</h1>
+      <p>Your personal fitness companion</p>
+    </div>
+    
+    <div class="status-indicator">
+      <div id="statusDot" class="status-dot"></div>
+      <span id="statusText">Initializing...</span>
+    </div>
+    
+    <ul id="messages"></ul>
+    
+    <div id="controls">
+      <button id="startWorkout">🎯 Start Workout</button>
+      <button id="toggleMic" class="mic-button">🎤 Enable Voice</button>
+    </div>
+  </div>
+  
+  <audio id="audioOutput" preload="auto"></audio>
+
+  <!-- Simplified TensorFlow.js setup for better compatibility -->
+  <script>
+    // Create a simple fallback for pose detection if TensorFlow fails
+    window.poseDetectionFallback = {
+      createDetector: () => Promise.resolve({
+        estimatePoses: () => Promise.resolve([{
+          keypoints: Array(17).fill().map((_, i) => ({
+            x: 320 + Math.sin(Date.now() / 1000 + i) * 50,
+            y: 240 + Math.cos(Date.now() / 1000 + i) * 50,
+            score: 0.8
+          }))
+        }])
+      })
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.0/dist/pose-detection.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
