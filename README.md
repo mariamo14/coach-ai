@@ -12,7 +12,7 @@ Real-time AI personal trainer with voice feedback and computer vision form analy
 
 ## Quick Start
 
-**Prerequisites:** Node.js 16+, Chrome browser, OpenAI API key
+**Prerequisites:** Node.js 16+, Chrome browser, Ollama installed on your machine
 
 ```bash
 cd coach-ai
